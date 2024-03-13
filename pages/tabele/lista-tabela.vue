@@ -7,7 +7,7 @@
       <NuxtLink to="/tabele/gradilista">gradilista</NuxtLink>
     </h1>
     <h1 class="text-2xl font-extrabold">
-      <NuxtLink to="/tabele/plate">plate</NuxtLink>
+      <NuxtLink to="/tabele/reports">izveštaji</NuxtLink>
     </h1>
   </section>
 </template>

@@ -15,6 +15,7 @@
       >
         <span>image</span>
         <h1 class="text-3xl">{{ data[0].ime }} {{ data[0].prezime }}</h1>
+        <!-- <h3>rad:{{ data[0].rad[0].vreme }} časova</h3> -->
         <div class="bg-transparent">
           <UButton @click="toggleAktivan" class="text-3xl mt-2 bg-transparent">
             <i
@@ -40,7 +41,7 @@
             <tr>
               <th class="py-2 px-4 border-b">Datum promene vrednosti</th>
               <th class="py-2 px-4 border-b">Vrednost radnog sata</th>
-            </tr>
+            </tr> 
           </thead>
           <tbody>
             <tr v-for="(item, index) in data[0].vrednost" :key="index">
@@ -122,46 +123,120 @@
       </UModal>
     </template>
   </UCard>
+  <!-- VEZBAMMMMMMM -->
+  <UCard>
+    <template #header>
+      <Placeholder class="h-8" />
+      <div
+        class="flex items-center justify-between mb-10"
+        v-if="data.length > 0"
+      >
+        
+        <h1 class="text-3xl">aktivnnosti radnika</h1>
+        <!-- <h3>rad:{{ data[0].rad[0].vreme }} časova</h3> -->
+        
+      </div>
+    </template>
+    <Placeholder class="h-32" />
+    <div class="grid gap-3 grid-cols-2">
+      <div>
+        <table
+          v-if="data[0] && data[0].vrednost"
+          class="min-w-full bg-white border border-gray-300 align-center text-center"
+        >
+          <thead>
+            <tr>
+              <th class="py-2 px-4 border-b">Datum rada</th>
+              <th class="py-2 px-4 border-b">Mesto rada</th>
+              <th class="py-2 px-4 border-b">Časovi rada</th>
+            </tr> 
+          </thead>
+          <tbody>
+            <tr v-for="(item, index) in data[0].rad" :key="index">
+              <td class="py-2 px-4 border-b">{{ item.timestamp }}</td>
+              <td class="py-2 px-4 border-b">{{ item.gradilište }}</td>
+              <td class="py-2 px-4 border-b">{{ item.vreme }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div v-else>
+          <h1 v-if="data[0]">Unesite svoje angažovanje</h1>
+          <h1 v-else>Data not available</h1>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 gap-4 place-items-center">
+       
+      </div>
+    </div>
+    <template #footer>
+      <Placeholder class="h-8" />
+      <div class="flex items-center justify-between m-2">
+        <UButton
+          @click="isOpenRad = true"
+          icon="i-heroicons-plus-circle"
+          color="green"
+          variant="solid"
+          label="aktivnost po danu"
+        />
+        
+      </div>
+      <!-- Modal koji dodaje aktivnosti radnika -->
+      <UModal v-model="isOpenRad">
+        <div class="p-4">
+          <UCard class="ml-20 mr-20">
+            <UForm @submit="saveRad">
+              <UFormGroup
+                required
+                label="nova aktivnost radnika"
+                name="nova aktivnost"
+              >
+                <UInput v-model="novaAktivnost" type="number" />
+              </UFormGroup>
+              <UFormGroup
+                required
+                label="nova mesto radnika"
+                name="nova mesto"
+              >
+                <UInput v-model="novoMesto" type="text" />
+              </UFormGroup>
+              
+              <UButton class="mt-2" @click="isOpenRad = false" type="submit"
+                >sačuvaj</UButton
+              >
+            </UForm>
+          </UCard>
+        </div>
+      </UModal>
+    </template>
+  </UCard>
 </template>
 <script setup>
 // import { ref, watch } from "vue";
 const isOpenCene = ref(false);
 const isOpenOpis = ref(false);
+const isOpenRad=ref(false)
 const { id } = useRoute().params;
 const supabase = useSupabaseClient();
 const novaVrednost = ref(null);
+const novoMesto=ref('')
 const data = ref([]);
 const noviOpis = ref("");
+const novaAktivnost=ref(null)
 const isLoading = ref(false);
 
 // Izvuci individualnog radnika
-// const fetchRadnici = async () => {
-//   isLoading.value = true;
-//   try {
-//     const { data } = await useAsyncData("radnici", async () => {
-//       const { data, error } = await supabase
-//         .from("radnici")
-//         .select()
-//         .order("kategorija", { ascending: false });
-//       if (error) return [];
-//       return data;
-//     });
-//     return data.value;
-//   } finally {
-//     isLoading.value = false;
-//   }
-// };
 const fetchRadnik = async () => {
   isLoading.value = true;
   try {
     const { data: responseData, error } = await supabase
       .from("radnici")
-      .select("id,ime,prezime,aktivan,vrednost,created_at,opis")
+      .select("id,ime,prezime,aktivan,vrednost,created_at,opis,rad")
       .eq("id", id);
     if (error) {
       console.error("Error fetching data:", error.message);
     } else {
       data.value = responseData;
+      console.log(data.value[0].rad[0].vreme);
     }
   } finally {
     isLoading.value = false;
@@ -265,4 +340,43 @@ const toggleAktivan = async () => {
     console.error("Unexpected error:", error.message);
   }
 };
+//Nova aktivnost
+const saveRad = async () => {
+  try {
+    if (data.value.length === 0 || !data.value[0]) {
+      console.error("No data available to update");
+      return;
+    }
+    const existingData = { ...data.value[0] };
+    if (!existingData.rad) {
+      existingData.rad = [];
+    }
+    const updatedData = {
+      ...existingData,
+      rad: [
+        ...existingData.rad,
+        {
+          vreme: novaAktivnost.value,
+          timestamp: formattedDate,
+          gradilište:novoMesto.value
+        },
+      ],
+    };
+    const { data: updateData, error: updateError } = await supabase
+      .from("radnici")
+      .update(updatedData)
+      .eq("id", id);
+    if (updateError) {
+      console.error("Error updating data:", updateError.message);
+    } else {
+      if (updateData !== null) {
+        data.value = updateData;
+      } else {
+        await fetchRadnik();
+      }
+    }
+  } catch (error) {
+    console.error("Unexpected error:", error.message);
+  }
+}; 
 </script>
