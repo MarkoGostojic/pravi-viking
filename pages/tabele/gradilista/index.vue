@@ -71,5 +71,5 @@ const refreshGradilista = async () =>
   (gradilista.value = await fetchGradilista());
 await refreshGradilista();
 
-// console.log(radnici.value);
+console.log(gradilista.value);
 </script>

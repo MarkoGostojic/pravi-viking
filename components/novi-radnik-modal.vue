@@ -46,11 +46,11 @@
             v-model="state.created_at"
           />
         </UFormGroup>
-        
+
         <UButton
           type="submit"
           color="green"
-          varian="solid"
+          variant="solid"
           label="sačuvati"
           :loading="isLoading"
         />
@@ -72,14 +72,12 @@ const schema = z.object({
   prezime: z.string(),
   kategorija: z.string(),
   created_at: z.string(),
-  
 });
 const initialState = {
   ime: undefined,
   prezime: undefined,
   kategorija: undefined,
   created_at: undefined,
-
 };
 const state = ref({
   ...initialState,

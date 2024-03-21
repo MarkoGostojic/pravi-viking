@@ -62,6 +62,20 @@ const resetForm = () => {
 const form = ref();
 const save = async () => {
   if (form.value.errors.length) return;
+  const existingItem = await supabase
+    .from("gradilista")
+    .select("*")
+    .eq("ime", state.value.ime)
+    .single();
+  if (existingItem.data) {
+    toast.add({
+      title: "Gradiliste već postoji",
+      description:
+        "Naziv gradilišta već postoji, molimo unesite jedinstveni naziv.",
+      icon: "i-heroicons-exclamation-circle",
+    });
+    return;
+  }
   // STORE INTO the SUPABASE
   isLoading.value = true;
   try {
